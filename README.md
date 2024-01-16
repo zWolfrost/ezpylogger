@@ -17,3 +17,7 @@ pyinstaller -F ezpylogger.py
 After being executed, this script will log all the keys pressed by the user and store them in a "keylog.txt" file located in the working directory (oftentimes the directory where the script is located).
 
 You can stop the script by pressing the "F12" key by default, or by killing its process (duh).
+
+## Disclaimer
+
+This script is for educational purposes only. I am not responsible for any damage caused by this script. Please use it responsibly.
