@@ -74,18 +74,18 @@ SCREENSHOT_FILENAME_FORMAT = "prtscr_{index}.png"
 # Interval between screenshots in seconds.
 SCREENSHOT_INTERVAL = 10
 
-# Whether to discard identical screenshots.
-DISCARD_IDENTICAL_SCREENSHOTS = True
+# Don't take a screenshot if the user has been inactive since taking the last one.
+SCREENSHOT_INACTIVITY_SKIP = True
 
 ##################################################################### End
 
 
-import os
+import os, win32api
 from pynput import keyboard, mouse
 from time import sleep
 from threading import Timer as Interval
 from PIL.ImageGrab import grab as screenshot
-from PIL import ImageChops
+
 
 
 # Last click
@@ -160,8 +160,9 @@ def write_click(x, y, button, pressed):
 
 
 
-# Last screenshot
-last_screenshot = None
+# Returns the number of seconds since the last user input
+def inactivity_seconds():
+    return (win32api.GetTickCount() - win32api.GetLastInputInfo()) / 1000.0
 
 # Returns the next filename in a sequence
 def next_filename_index(folder, str_format):
@@ -170,21 +171,10 @@ def next_filename_index(folder, str_format):
         index += 1
     return os.path.join(folder, str_format.format(index=index))
 
-# Returns whether two images are identical
-def images_are_identical(img1, img2):
-    return ImageChops.difference(img1, img2).getbbox() == None
-
 # Take a screenshot every 5 seconds
 def start_screenshot_timer():
-    prtscr = screenshot()
-
-    global last_screenshot
-    if (DISCARD_IDENTICAL_SCREENSHOTS == False or last_screenshot == None or images_are_identical(prtscr, last_screenshot) == False):
-        last_screenshot = prtscr
-        prtscr.save(next_filename_index(LOGS_PATHNAME, SCREENSHOT_FILENAME_FORMAT))
-        print("\nScreenshot taken!")
-    else:
-        print("\nIdentical screenshot, skipping...")
+    if (SCREENSHOT_INACTIVITY_SKIP == False or inactivity_seconds() < SCREENSHOT_INTERVAL):
+        screenshot().save(next_filename_index(LOGS_PATHNAME, SCREENSHOT_FILENAME_FORMAT))
 
     Interval(SCREENSHOT_INTERVAL, start_screenshot_timer).start()
 
