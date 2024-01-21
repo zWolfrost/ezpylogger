@@ -1,0 +1,84 @@
+{
+    //Either absolute or relative folder path name for the logs. Please use forward slashes "/". Leave "." for current directory.
+    "logs_location": "logs",
+
+    "keylogger": {
+        "enabled": true,
+
+        //Keylog file name. This will be created in the same directory as this script.
+        "filename": "keylog.txt",
+
+        //Replace command names with strings. Blank strings are ignored buttons.
+        "replace": {
+            "[SPACE]": " ",
+            "[SHIFT]": "",
+            "[SHIFT_R]": "",
+            "[CTRL_L]": "",
+            "[CTRL_R]": "",
+            "[ALT_L]": "[ALT]",
+            "[ALT_GR]": "",
+            "[96]": "0",
+            "[97]": "1",
+            "[98]": "2",
+            "[99]": "3",
+            "[100]": "4",
+            "[101]": "5",
+            "[102]": "6",
+            "[103]": "7",
+            "[104]": "8",
+            "[105]": "9",
+            "[106]": "*",
+            "[107]": "+",
+            "[108]": ",",
+            "[109]": "-",
+            "[110]": ".",
+            "[111]": "/",
+            "[F12]": "[EXIT]" //Exit button
+        }
+    },
+
+    "mouselogger": {
+        "enabled": true,
+
+        //Format for the mouse click string. "{btn}" is the mouse button, "{x}" and "{y}" are the coordinates.
+        "string_format": "[{btn}MB_{x},{y}]",
+
+        //Whether to ignore multiple & same mouse clicks. Only the first click will be logged.
+        "ignore_same": true,
+
+        //Replace mouse button names with other button names. Blank strings are ignored buttons.
+        "replace": {
+            "LEFT": "L",
+            "RIGHT": "R",
+            "MIDDLE": "M",
+            "X1": "4",
+            "X2": "5"
+        }
+    },
+
+    "screenshot": {
+        "enabled": false,
+
+        //Screenshot file name format. "{index}" is an incrementing number.
+        "filename_format": "prtscr_{index}.png",
+
+        //Interval between screenshots in seconds.
+        "interval": 10,
+
+        //Don't take a screenshot if the user has been inactive since taking the last one.
+        "inactivity_skip": true
+    },
+
+    "history": {
+        "enabled": true,
+
+        //History file name format. "{browser}" is the name of the browser.
+        "filename_format": "{browser}_history.txt",
+
+        //Interval between history scrapes in seconds.
+        "interval": 300,
+
+        //Limit of history entries to scrape. Set to "None" for no limit (not recommended, could cause much lag).
+        "limit": 100
+    }
+}
