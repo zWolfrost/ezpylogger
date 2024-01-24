@@ -6,26 +6,24 @@ After being executed, this script can seamlessy log user actions and store them 
 As of this version, it can:
 - Log key presses & mouse clicks
 - Take screenshots
-- Scrape browser history (chrome & edge)
+- Scrape browser history (supports chrome & edge)
+- Send emails
+
+All the executable files are created using pyinstaller (`pyinstaller -F file.pyw`) and you can also compile them by yourself if you want to, once having installed the [requirements](requirements.txt) with `pip install -r requirements.txt`, of course.
 
 ## Installation
-You can download the script as an executable file, compiled with pyinstaller, so that it can also be executed on machines that don't have python installed.
+From v1.7.0 the releases tab will have an executable file that contains the python interpreter & all the necessary requirements to run the script, but not the actual script.
 
-If you want to compile it yourself, you can just install the dependencies with pip and then compile it using pyinstaller.
+In other words, its only purpose is to **run** the script.
 
-```shell
-pyinstaller -F ezpylogger.py
-```
+That means that the executable file **will not work** if it doesn't find the "ezpylogger.pyw" file in the same folder, so you'll have to download that as well.
 
 ## Usage
-You can customize this script by including a "config.json" file in the working directory (the directory from where you start up the script).
+**This script will give an error if ran without a "config.json" file in its working directory!**
 
-You might wanna check the ["config.json" example](config-example.json) file and its [commented version](config-explained.json5) in the repo, to get an idea of what the script can do.
+The "config.json" file will tell the script what loggers to enable and numerous other options.
 
-By default only the keylogger will be enabled, with minimal configuration.
-
-You can stop the script by pressing the "F12" key by default, or by killing its process (duh).
-
+You might wanna check out the (downloadable) ["config.json" example](config-example.json) file to have a starting point as well as its [commented version](config-explained.json5), to get an idea of what the script can do.
 
 ## Disclaimer
 This script is for educational purposes only. I am not responsible for any damage caused by this script. Please use it responsibly.
